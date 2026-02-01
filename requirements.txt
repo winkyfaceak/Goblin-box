@@ -10,3 +10,5 @@ requests
 # NOTE: install torch separately following platform-specific instructions:
 # https://pytorch.org/get-started/locally/
 # Optionally add a line here like `torch` if you accept platform-specific pip behavior.
+
+PyQt6

@@ -14,7 +14,7 @@ $PY -m venv .venv
 source .venv/bin/activate
 
 python -m pip install --upgrade pip setuptools wheel
-python -m pip install certifi
+python -m pip install certifi PyQt6
 
 # export cert bundle for the current shell/install commands
 # shellcheck disable=SC2155

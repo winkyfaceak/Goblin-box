@@ -14,7 +14,7 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 
 python -m pip install --upgrade pip setuptools wheel
-python -m pip install certifi
+python -m pip install certifi PyQt6
 
 $env:SSL_CERT_FILE = python - <<'PY'
 import certifi, sys
