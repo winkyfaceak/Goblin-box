@@ -10,11 +10,11 @@ class HomePage(QWidget):
         super().__init__()
         layout = QVBoxLayout()
 
-        title = QLabel("Home")
+        title = QLabel("Welcome to goblin box!")
         title.setFont(QFont("Arial", 24, QFont.Weight.Bold))
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        btn_dictation = QPushButton("Go to Dictation")
+        btn_dictation = QPushButton("Dictation")
 
         btn_dictation.clicked.connect(lambda: self.switch_page.emit("dictation"))
 
