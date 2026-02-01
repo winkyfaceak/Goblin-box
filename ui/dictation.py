@@ -1,13 +1,13 @@
 from PyQt6.QtCore import pyqtSignal, QThread
-from PyQt6.QtWidgets import QWidget, QPushButton, QVBoxLayout, QTextEdit, QHBoxLayout
+from PyQt6.QtWidgets import QWidget, QPushButton, QVBoxLayout, QTextEdit, QHBoxLayout, QLabel
 
 from audio import recorder
 from stt import whisper_engine
 
 
 class DictationThread(QThread):
-    """Separate thread for dictation so UI doesn't freeze"""
-    text_transcribed = pyqtSignal(str)  # Signal to send transcribed text
+    """Background thread for live dictation"""
+    text_transcribed = pyqtSignal(str)
 
     def __init__(self):
         super().__init__()
@@ -17,135 +17,136 @@ class DictationThread(QThread):
         self.whisper = whisper_engine.WhisperEngine(model_size="base")
 
     def run(self):
-        """This runs in the background thread"""
         while self.is_running:
             if not self.is_paused:
                 try:
                     audio = self.recorder.record(duration=5)
                     text = self.whisper.transcribe(audio_np=audio)
                     if text:
-                        self.text_transcribed.emit(text)  # Send text to UI
+                        self.text_transcribed.emit(text)
                 except Exception as e:
                     print(f"Error: {e}")
             else:
-                # Sleep a bit when paused to not waste CPU
                 self.msleep(100)
 
     def pause(self):
-        """Pause dictation"""
         self.is_paused = True
 
     def resume(self):
-        """Resume dictation"""
         self.is_paused = False
 
     def stop(self):
-        """Stop the thread"""
         self.is_running = False
-        self.wait()  # Wait for thread to finish
+        self.wait()
 
 
-class DictationWindow(QWidget):
+class DictationPage(QWidget):
+    """Live dictation page - records and transcribes in real-time"""
     switch_page = pyqtSignal(str)
 
     def __init__(self):
         super().__init__()
         layout = QVBoxLayout()
 
-        # Text display area
-        self.text_display = QTextEdit()
-        self.text_display.setPlaceholderText("Transcribed text will appear here...")
-        self.text_display.setMinimumHeight(300)
+        # Title
+        title = QLabel("Live Dictation")
+        title.setStyleSheet("font-size: 20px; font-weight: bold;")
 
-        # Control buttons in a horizontal layout
-        button_layout = QHBoxLayout()
+        # Status
+        self.status_label = QLabel("Ready to record")
+
+        # Text display
+        self.text_display = QTextEdit()
+        self.text_display.setPlaceholderText("Start dictation and speak...")
+        self.text_display.setMinimumHeight(350)
+
+        # Control buttons
+        control_layout = QHBoxLayout()
 
         self.start_btn = QPushButton("Start Dictation")
         self.start_btn.clicked.connect(self.start_dictation)
 
         self.pause_btn = QPushButton("Pause")
         self.pause_btn.clicked.connect(self.toggle_pause)
-        self.pause_btn.setEnabled(False)  # Disabled until dictation starts
+        self.pause_btn.setEnabled(False)
 
-        self.stop_btn = QPushButton("Stop Dictation")
+        self.stop_btn = QPushButton("Stop")
         self.stop_btn.clicked.connect(self.stop_dictation)
-        self.stop_btn.setEnabled(False)  # Disabled until dictation starts
+        self.stop_btn.setEnabled(False)
 
-        clear_btn = QPushButton("Clear Text")
-        clear_btn.clicked.connect(self.clear_text)
+        control_layout.addWidget(self.start_btn)
+        control_layout.addWidget(self.pause_btn)
+        control_layout.addWidget(self.stop_btn)
 
-        button_layout.addWidget(self.start_btn)
-        button_layout.addWidget(self.pause_btn)
-        button_layout.addWidget(self.stop_btn)
-        button_layout.addWidget(clear_btn)
+        # Utility buttons
+        utility_layout = QHBoxLayout()
+
+        clear_btn = QPushButton("Clear")
+        clear_btn.clicked.connect(self.text_display.clear)
+
+        utility_layout.addWidget(clear_btn)
 
         # Back button
         back_btn = QPushButton("← Back to Home")
         back_btn.clicked.connect(lambda: self.switch_page.emit("home"))
 
-        # Add everything to layout
+        # Layout
+        layout.addWidget(title)
+        layout.addWidget(self.status_label)
+        layout.addLayout(control_layout)
         layout.addWidget(self.text_display)
-        layout.addLayout(button_layout)
+        layout.addLayout(utility_layout)
         layout.addStretch()
         layout.addWidget(back_btn)
 
         self.setLayout(layout)
 
-        # Dictation thread (not started yet)
         self.dictation_thread = None
         self.is_paused = False
 
     def start_dictation(self):
-        """Start the dictation thread"""
+        """Start live dictation"""
         if self.dictation_thread is None or not self.dictation_thread.isRunning():
             self.dictation_thread = DictationThread()
             self.dictation_thread.text_transcribed.connect(self.append_text)
             self.dictation_thread.start()
 
-            # Update button states
             self.start_btn.setEnabled(False)
             self.pause_btn.setEnabled(True)
             self.stop_btn.setEnabled(True)
-            self.pause_btn.setText("Pause")
+            self.status_label.setText("🔴 Recording...")
             self.is_paused = False
 
     def toggle_pause(self):
-        """Pause or resume dictation"""
+        """Pause/resume dictation"""
         if self.dictation_thread and self.dictation_thread.isRunning():
             if self.is_paused:
-                # Resume
                 self.dictation_thread.resume()
                 self.pause_btn.setText("Pause")
+                self.status_label.setText("🔴 Recording...")
                 self.is_paused = False
             else:
-                # Pause
                 self.dictation_thread.pause()
                 self.pause_btn.setText("Resume")
+                self.status_label.setText("⏸ Paused")
                 self.is_paused = True
 
     def stop_dictation(self):
-        """Stop the dictation thread"""
+        """Stop dictation"""
         if self.dictation_thread:
             self.dictation_thread.stop()
             self.dictation_thread = None
 
-            # Update button states
             self.start_btn.setEnabled(True)
             self.pause_btn.setEnabled(False)
             self.stop_btn.setEnabled(False)
             self.pause_btn.setText("Pause")
+            self.status_label.setText("Stopped")
             self.is_paused = False
 
     def append_text(self, text):
-        """Add transcribed text to the display"""
-        # Move cursor to end
+        """Add transcribed text"""
         cursor = self.text_display.textCursor()
         cursor.movePosition(cursor.MoveOperation.End)
         self.text_display.setTextCursor(cursor)
-
-        # Append text with a space
         self.text_display.insertPlainText(text + " ")
-
-    def clear_text(self):
-        """Clear all text from the display"""
-        self.text_display.clear()

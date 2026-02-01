@@ -12,3 +12,4 @@ requests
 # Optionally add a line here like `torch` if you accept platform-specific pip behavior.
 
 PyQt6
+librosa
