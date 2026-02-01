@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import (
 from .dictation import DictationWindow
 from .home import HomePage
 
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -20,8 +21,8 @@ class MainWindow(QMainWindow):
         self.dictation_page = DictationWindow()
 
         # Add pages to stacked widget
-        self.stacked_widget.addWidget(self.home_page)      # Index 0
-        self.stacked_widget.addWidget(self.dictation_page) # Index 1
+        self.stacked_widget.addWidget(self.home_page)  # Index 0
+        self.stacked_widget.addWidget(self.dictation_page)  # Index 1
 
         # Create a mapping of page names to indices
         self.page_indices = {

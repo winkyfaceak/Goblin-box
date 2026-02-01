@@ -1,7 +1,9 @@
 import time
 from queue import Queue, Empty
+
 import numpy as np
 import sounddevice as sd
+
 
 class AudioRecorder:
     """
