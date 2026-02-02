@@ -6,7 +6,6 @@ WORKDIR /app
 COPY . /app
 RUN apt-get update && apt-get install -y --no-install-recommends build-essential libsndfile1 \
  && python -m pip install --upgrade pip setuptools wheel \
- && python -m pip install certifi PyQt6 \
  && export SSL_CERT_FILE="$(python -c 'import certifi; print(certifi.where())')" \
  && python -m pip install -r requirements.txt \
  && apt-get remove -y build-essential \
