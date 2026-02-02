@@ -13,3 +13,4 @@ requests
 
 PyQt6
 librosa
+certifi
